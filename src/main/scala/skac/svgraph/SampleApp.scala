@@ -14,7 +14,7 @@ import com.github.skac112.vgutils._
 
 object SampleApp {
   def main(args: Array[String]): Unit = {
-    println("Hello world!")
+    println("Hello world 1!")
   }
 
   @JSExportTopLevel("addClickedMessage")

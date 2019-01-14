@@ -1,9 +1,11 @@
 package skac.svgraph
 
+import focus._
+
 class Viewer[ND, ED](paperSelector: String) {
   private val canvas = new Canvas(paperSelector)
-  private var skinGraph
-  private var focusGraph
+  private var skinGraph: SkinGraph = _
+  private var focusGraph: FocusGraph[ND, ED] = _
 
   def setGraph(graph: FocusGraph[ND, ED]): Unit = {
     focusGraph = graph
@@ -11,15 +13,16 @@ class Viewer[ND, ED](paperSelector: String) {
     canvas.setGraph(skinGraph)
   }
 
-  def addGraph(graph: FocusGraph[ND, ED]): Unit = {
-    val new_focus_graph = mergeFocusGraphs(focusGraph, graph, 'ADD)
-    val new_skin_g_1 = skin(new_focus_graph)
-    val new_skin_g_2 = moveExistSkinLocs(new_skin_g_1, skinGraph)
-    val new_skin_g_3 = layoutWithPinned(new_skin_g_2, skinGraph)
-    val skin_delta = skinDelta(skinGraph, new_skin_g_3)
-    focusGraph = new_focus_graph
-    applySkinDelta(skin_delta)
-  }
+  def addGraph(graph: FocusGraph[ND, ED]): Unit = ???
+//  {
+//    val new_focus_graph = mergeFocusGraphs(focusGraph, graph, 'ADD)
+//    val new_skin_g_1 = skin(new_focus_graph)
+//    val new_skin_g_2 = moveExistSkinLocs(new_skin_g_1, skinGraph)
+//    val new_skin_g_3 = layoutWithPinned(new_skin_g_2, skinGraph)
+//    val skin_delta = skinDelta(skinGraph, new_skin_g_3)
+//    focusGraph = new_focus_graph
+//    applySkinDelta(skin_delta)
+//  }
 
   def moveGraph(graph: FocusGraph[ND, ED]): Unit = ???
 

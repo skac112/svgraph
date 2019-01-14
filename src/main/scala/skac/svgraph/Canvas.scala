@@ -3,13 +3,14 @@ import org.scalajs.jquery.jQuery
 import org.scalajs.jquery._
 import scala.scalajs.js
 import graph._
-import transform._
 import scala.math._
 import skac.euler.General._
 import skac.euler._
 import com.github.skac112.vgutils._
+import com.github.skac112.vgutils.transform._
 import org.scalajs.dom
 import dom.document
+import org.scalajs.dom._
 
 object Canvas {
   // type SkinGraph = Graph[NodeSkin, EdgeSkin]
@@ -49,6 +50,8 @@ class Canvas(paperSelector: String) {
   jqEl.mousedown(canvasMouseDown _)
   jqEl.mousemove(canvasMouseMove _)
   jqEl.mouseup(canvasMouseUp _)
+  jqEl.click(canvasMouseClick _)
+
 
   /**
    * Map of svg group for each node skin
@@ -65,13 +68,13 @@ class Canvas(paperSelector: String) {
    * to "paper" coordinate system (PCS). It is a composition of scaling and
    * translation.
    */
-  private var trans: ScaleTransl = ScaleTransl.id
+  private var trans: UniScaleTransl = UniScaleTransl(1.0, ori)
 
   /**
    * Scale Transform transforming points from "abstract" coordinate system (ACS)
    * to "elements group" coordinate system (EGCS).
    */
-  private def egTrans = Scale(trans.scale)
+  private def egTrans = Scale(trans.scale, trans.scale)
 
   /**
    * Transform point in ACS to point in EGCS.
@@ -85,7 +88,7 @@ class Canvas(paperSelector: String) {
     this.trans = fitTrans(skinGraph)
     // container group has translation always equal to point of translation in
     // ACS -> EGCS translate transform
-    val m = translMatrix(trans.transl)
+    val m = translMatrix(trans.translation)
     // println("transformacja acs -> egcs:")
     // println(toTransString(m))
 		// el_g.transform(toTransString(m))
@@ -106,7 +109,7 @@ class Canvas(paperSelector: String) {
     * @param skinGraph
     * @return
     */
-  private def fitTrans(skinGraph: SkinGraph): ScaleTransl = {
+  private def fitTrans(skinGraph: SkinGraph): UniScaleTransl = {
     val locations: Set[Point] = skinGraph.nodes map {_.Data.location} toSet
     // bounding box of locations of nodes, graphic of skins is not taken into condideration
     val b_box = Bounds.forPts(locations)
@@ -118,7 +121,7 @@ class Canvas(paperSelector: String) {
     // s*draw_top + y = 0
     // where s is a scale
     val transl = b_box.tl * (-scale)
-    ScaleTransl(scale, transl)
+    UniScaleTransl(scale, transl)
   }
 
   private def translMatrix(transl: Point): SnapMatrix =
@@ -165,6 +168,7 @@ class Canvas(paperSelector: String) {
     // edge
     val edge_info = graph.edge(edge).get
     val node_skins: List[NodeSkin] =  List(edge_info.SrcNode, edge_info.DstNode) map nodeSkin _
+    // node locations in EGCS
     val node_locs: List[Point] = node_skins map {skin => egTrans.transPt(skin.location)}
     // step 2 - calculating directions
     val skin = edgeSkin(edge)
@@ -204,7 +208,7 @@ class Canvas(paperSelector: String) {
   def canvasMouseDown(event: JQueryEventObject): Unit = {
     if (event.target == jqEl.get(0)) {
       println("mouse down")
-      this.dragging = true;
+      this.dragging = true
       this.dragPoint = Point(event.pageX, event.pageY);
     }
   }
@@ -214,15 +218,42 @@ class Canvas(paperSelector: String) {
         val new_drag_p = Point(event.pageX, event.pageY)
         val move = new_drag_p - this.dragPoint
         this.dragPoint = new_drag_p
-        this.trans = this.trans.copy(transl = this.trans.transl + move)
+        this.trans = this.trans.copy(translation = this.trans.translation + move)
         this.updateElGrTrans()
       }
+//      if (!dragging) {
+//        endDrag = false
+//      }
   }
 
   def canvasMouseUp(event: JQueryEventObject): Unit = {
     if (this.dragging) {
-      this.dragging = false;
-      this.endDrag = true;
+      this.dragging = false
+      this.endDrag = true
+    }
+  }
+
+  def canvasMouseClick(event: JQueryEventObject): Unit = {
+    if (!dragging && !endDrag) {
+      val click_pcs_pt = Point(event.offsetX, event.offsetY)
+      println(click_pcs_pt)
+      val click_acs_pt = this.trans.inv transPt click_pcs_pt
+      this.trans = this.trans.zoomAt(click_acs_pt, 1.5)
+      updateElGrTrans()
+      updateElemsPositions()
+    }
+    endDrag = false
+//    dragging = false
+//    endDrag = false
+  }
+
+  private def updateElemsPositions(): Unit = {
+    graph.nodes foreach updateNodePos _
+    graph.edges foreach {edge =>
+      updateEdgeEnds(edge)
+      val skin = edgeSkin(edge)
+      val gr = edgeGroups(skin)
+      skin.update(graph, gr, paper)
     }
   }
 
@@ -232,7 +263,7 @@ class Canvas(paperSelector: String) {
    */
   private def updateElGrTrans() {
     if (!elemsGroupO.isEmpty) {
-      val m = translMatrix(trans.transl)
+      val m = translMatrix(trans.translation)
       elemsGroup.transform(toTransString(m))
     }
   }

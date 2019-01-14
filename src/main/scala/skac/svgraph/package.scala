@@ -61,7 +61,7 @@ package object svgraph {
      * value should be equal or greater in given direction than respective
      * value returned by extent(), due to elements such as a label.
      */
-    def layoutExtent(dir: Angle): Double = extend(dir)
+    def layoutExtent(dir: Angle): Double = extent(dir)
   }
 
   /**

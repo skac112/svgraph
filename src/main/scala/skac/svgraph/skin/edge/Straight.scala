@@ -24,7 +24,7 @@ class Straight extends EdgeSkin {
   private var _focus: Double = 0.0
   private var _start: Point = Point(0, 0)
   private var _end: Point = Point(0, 0)
-  private var _color: WebColor = "#008"
+  private var _color: WebColor = "#005"
   private var _width: Double = 1.0
   private var lineO: Option[SnapLineElement] = None
   private var srcJointO: Option[SnapElement] = None

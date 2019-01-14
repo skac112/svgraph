@@ -1,3 +1,3 @@
 package skac.svgraph.focus
 
-case class FocusNode[ND](baseNodeId: Any, baseNodeData: Double, focus: Double, weight: Double, visibility: Double)
+case class FocusNode[ND](baseId: Any, baseData: ND, focus: Double, weight: Double, visibility: Double)
